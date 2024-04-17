@@ -1,0 +1,376 @@
+﻿@{
+    @using apiclass;
+    @model IEnumerable<Centre>;
+}
+<div id="adminLogin">
+    <p>Admin Login: </p>
+    <form>
+        <input type = "text" id="adminUsername" name="adminUsername" placeholder="Username" />
+        <input type = "text" id="adminPassword" name="adminPassword" placeholder="Password" />
+    </form>
+    <button onclick="login()">Login</button>
+</div>
+
+<div id = "adminInsert">
+    <h1>Insert Centre</h1>
+    <form>
+        <input type = "text" id="inputCName" name="inputCName" placeholder="Name" />
+        <input type = "text" id="inputCAddress" name="inputCAddress" placeholder="Address" />
+        <input type = "text" id="inputCCapacity" name="inputCCapacity" placeholder="Capacity" />
+    </form>
+    <button onclick="insertCentre()">Insert</button>
+</div>
+
+
+
+<div id="centreList">
+    <h1 class="display-4">List of Centres</h1>
+    <table id="centreTable">
+        <thead id = centreTableHeader>
+            <tr>
+                <td>Centre Name</td>
+                <td>Address</td>
+                <td>Capacity</td>
+            </tr>
+        </thead>
+        <tbody id = centreTableBody></tbody>
+    </table>
+    <form>
+        <input type="text" id="searchStr" name="searchStr" placeholder="Centre Name"/>
+    </form>
+    <button id="searchButton" onclick="userSearchCentre()">Search</button>
+</div>
+
+<div id="adminCentreBooking">
+    <p class="display-4" id="adminBookingTableName"></p>
+    <p></p>
+    <table id = "adminBookingTable">
+        <thead id = adminBookingTableHeader>
+            <tr>
+                <td>Start Date</td>
+                <td>End Date</td>
+                <td>Username</td>
+            </tr>
+        </thead>
+        <tbody id = adminBookingTableBody></tbody>
+        <!--table-->
+    </table>
+</div>
+
+
+<div id="userCentreBooking">
+    <p class="display-4" id="userBookingTableName"></p>
+    <p></p>
+    <table id = "userBookingTable">
+        <thead id = userBookingTableHeader>
+            <tr>
+                <td>No.</td>
+                <td>Available Start Date</td>
+                <td>Available End Date</td>
+            </tr>
+        </thead>
+        <tbody id = userBookingTableBody></tbody>
+        <!--table-->
+    </table>
+    <form id = "inputBooking">
+        <input type = "date" id="inputSDate" name="inputSDate" placeholder="Start Date" />
+        <input type = "date" id="inputEDate" name="inputEDate" placeholder="End Date" />
+        <input type = "text" id="inputName" name="inputName" placeholder="Name" />
+    </form>
+    <button onclick = "booking()">Make Booking</button>
+    
+</div>
+
+
+<script>
+    document.getElementById("adminCentreBooking").style.display = "none";
+    document.getElementById("userCentreBooking").style.display = "none";
+    document.getElementById('adminInsert').style.display = "none";
+
+    window.onload = function() { userCentreList();};
+
+    //after selecting centre remove and dispaly table for new centres
+    function adminCentreList()
+    {
+        $.ajax({
+            url: '/home/getcentres',
+            type: 'get',
+            contentType: 'application/json',
+            processData: false,
+            success: function(data, textStatus, jQhxr)
+            {
+                removeTableRow(document.getElementById("centreTableBody"));
+                var but = document.getElementById("searchButton");
+                but.addEventListener('click', function(){adminSearchCentre();});
+                var objLol = data;
+                objLol.forEach(adminCentreRow);
+            },
+            error: function(xhr, textStatus, error)
+            {
+                alert("Centre List Error");
+            }
+        });
+    }
+
+    function userCentreList()
+    {
+        $.ajax({
+            url: '/home/getcentres',
+            type: 'get',
+            contentType: 'application/json',
+            processData: false,
+            success: function(data, textStatus, jQhxr)
+            {
+                var obj = data;
+                console.log(obj);
+                removeTableRow(document.getElementById("centreTableBody"));
+                var but = document.getElementById("searchButton");
+                but.addEventListener('click', function(){userSearchCentre();});
+                obj.forEach(userCentreRow);
+            },
+            error: function(xhr, textStatus, error)
+            {
+                alert("Centre List Error");
+            }
+        });
+    }
+
+    
+    function userSearchCentre()
+    {
+        $.ajax({
+            url: '/home/searchcentre/'+$('#searchStr').val(),
+            type: 'get',
+            contentType: 'application/json',
+            processData: false,
+            success: function(data, textStatus, jqxhr)
+            {
+                removeTableRow(document.getElementById("centreTableBody"));
+                data.forEach(userCentreRow);
+            },
+            error: function(xhr, textStatus, error)
+            {
+                alert("Centre is unavailable.")
+            }
+        })
+    }
+
+    function adminSearchCentre()
+    {
+        $.ajax({
+            url: '/home/searchcentre/'+$('#searchStr').val(),
+            type: 'get',
+            contentType: 'application/json',
+            processData: false,
+            success: function(data, textStatus, jqxhr)
+            {
+                removeTableRow(document.getElementById("centreTableBody"));
+                data.forEach(adminCentreRow);
+            },
+            error: function(xhr, textStatus, error)
+            {
+                alert("Centre is unavailable.")
+            }
+        })
+    }
+
+
+
+    function adminSelectCentre(name)
+    {
+        $.ajax({
+            url: '/home/getbookings/'+name,
+            type: 'get',
+            contentType: 'application/json',
+            processData: false,
+            success: function(data, textStatus, jQhxr)
+            {
+                document.getElementById("adminCentreBooking").style.display = "block";
+                var obj = data;
+                var bTable = document.getElementById("adminBookingTable");
+                document.getElementById("adminBookingTableName").innerHTML = obj[0].centre_name;
+                removeTableRow(document.getElementById("adminBookingTableBody"));
+
+                obj.forEach(adminBookingRow);
+                document.getElementById('adminCentreBooking').style.display = "visible";
+            },
+            error: function(xhr, textStatus, error)
+            {
+                alert("Centre has no bookings");
+            }
+        });
+    }
+
+    function userSelectCentre(name)
+    {
+        $.ajax({
+            url: '/home/getAvailableDates/'+name,
+            type: 'get',
+            contentType: 'application/json',
+            processData: false,
+            success: function(data, textStatus, jQhxr)
+            {
+                document.getElementById("userCentreBooking").style.display = "block";
+                var obj = data;
+                console.log(obj);
+                removeTableRow(document.getElementById("userBookingTableBody"));
+                var bTable = document.getElementById("userBookingTable");
+                document.getElementById("userBookingTableName").innerHTML = obj[0].centre_name;
+                obj.forEach(userBookingRow);
+                document.getElementById('userCentreBooking').style.display = "visible";
+            },
+            error: function(xhr, textStatus, error)
+            {
+                //alert("Select Centre Failed");
+            }
+        });
+    }
+    
+    function adminBookingRow(value, index, array)
+    {
+        var row = document.getElementById("adminBookingTableBody").insertRow(index);
+        row.id = "bookingRow"+index;
+        var startDate = row.insertCell(0);
+        var end_date = row.insertCell(1);
+        var name = row.insertCell(2);
+        var start = value.start_date.split("T");
+        startDate.innerHTML = start[0];
+        var end = value.end_date.split("T");
+        end_date.innerHTML = end[0];
+        name.innerHTML = value.user_name;
+    }
+
+    function userBookingRow(value, index, array)
+    {
+        var row = document.getElementById("userBookingTableBody").insertRow(index);
+        row.id = "bookingRow"+index;
+        var num = row.insertCell(0);
+        var start_date = row.insertCell(1);
+        var end_date = row.insertCell(2);
+        num.innerHTML = (index + 1);
+        var start = value.start_date.split("T");
+        start_date.innerHTML = start[0];
+        if(index < (array.length - 1))
+        {
+            var end = value.end_date.split("T");
+            end_date.innerHTML = end[0];
+        }
+    }
+
+    function booking()
+    {
+        console.log(document.getElementById('userBookingTableName').innerHTML);
+        console.log($('#inputSDate').val());
+        console.log($('#inputEDate').val());
+        console.log($('#inputName').val());
+        $.ajax({
+            url: '/home/makebookings',
+            type: 'post',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'centre_name': document.getElementById('userBookingTableName').innerHTML,
+                'start_date': $('#inputSDate').val(),
+                'end_date': $('#inputEDate').val(),
+                'user_name': $('#inputName').val()
+            }),
+            success: function(data, textStatus, jqxhr)
+            {
+                alert("Booking made");
+            },
+            error: function(xhr, textStatus, error)
+            {
+                alert("Date is currently unavailable for booking.")
+            }
+        })
+    }
+
+    function login()
+    {
+        $.ajax({
+            url: '/home/login',
+            type: 'post',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'user_name': $('#adminUsername').val(),
+                'password': $('#adminPassword').val()
+            }),
+            success: function(data, textStatus, jqxhr)
+            {
+                document.getElementById('userCentreBooking').style.display = "none";
+                document.getElementById('adminInsert').style.display = "block";
+                adminCentreList();
+            },
+            error: function(xhr, textStatus, error)
+            {
+                alert("Wrong user_name or password");
+            }
+        })
+    }
+
+    function insertCentre()
+    {
+        $.ajax({
+            url: '/home/insertcentre',
+            type: 'post',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'name': $('#inputCName').val(),
+                'address': $('#inputCAddress').val(),
+                'capacity': $('#inputCCapacity').val()
+            }),
+            success: function(data, textStatus, jqxhr)
+            {
+                alert("Success");
+                adminCentreList();
+            },
+            error: function(xhr, textStatus, error)
+            {
+                alert("Insert Failed");
+            }
+        })
+    }
+
+
+    function adminCentreRow(value, index, array)
+    {
+        var row = document.getElementById("centreTableBody").insertRow(index);
+        row.id = "bookingRow"+index;
+        var name = row.insertCell(0);
+        var address = row.insertCell(1);
+        var capacity = row.insertCell(2);
+        var buttonCell = row.insertCell(3);
+        name.innerHTML = value.name;
+        address.innerHTML = value.address;
+        capacity.innerHTML = value.capacity;
+        var button = document.createElement("button");
+        button.innerHTML = "Select";
+        button.addEventListener('click', function(){adminSelectCentre(value.name);});
+        buttonCell.appendChild(button);
+    }
+
+    function userCentreRow(value, index, array)
+    {
+        var row = document.getElementById("centreTableBody").insertRow();
+        row.id = "bookingRow"+index;
+        var name = row.insertCell(0);
+        var address = row.insertCell(1);
+        var capacity = row.insertCell(2);
+        var buttonCell = row.insertCell(3);
+        name.innerHTML = value.name;
+        address.innerHTML = value.address;
+        capacity.innerHTML = value.capacity;
+        var button = document.createElement("button");
+        button.innerHTML = "Select";
+        button.addEventListener('click', function(){userSelectCentre(value.name);});
+        buttonCell.appendChild(button);
+    }
+
+    function removeTableRow(id)
+    {
+        var count = id.rows.length;
+        for(i = count - 1; i >= 0; i--)
+        {
+            id.deleteRow(i);
+        }
+    }
+</script>

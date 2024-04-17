@@ -1,0 +1,42 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+div#adminInsert {
+    display: "visible";
+}
+
+div#centreList {
+    display: "visible";
+}
+
+div#adminCenterBooking {
+    display: "visible";
+}
+
+div#userCenterBooking {
+    display: "visible";
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+table#centreTable {
+    position: center;
+}
